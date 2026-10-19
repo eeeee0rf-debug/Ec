@@ -19,28 +19,9 @@ jobs:
         $part2 = [System.IO.File]::ReadAllBytes("EC-CS2-part2.zip")
         $merged = $part1 + $part2
         [System.IO.File]::WriteAllBytes("EC-CS2.zip", $merged)
-        Expand-Archive -Path "EC-CS2.zip" -DestinationPath "." -Force
-        Move-Item -Path "EC-CS2-Project\*" -Destination "." -Force
-
-    - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v2
-
-    - name: Build
-      run: |
-        msbuild "EC-CS2.sln" `
-          /p:Configuration=Release `
-          /p:Platform=x64 `
-          /m /nologo
-
-    - name: Collect output
-      run: |
-        New-Item -ItemType Directory -Force -Path "output"
-        Copy-Item -Path "x64\Release\*.dll" -Destination "output\" -ErrorAction SilentlyContinue
-        Copy-Item -Path "x64\Release\*.exe" -Destination "output\" -ErrorAction SilentlyContinue
-
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: EC-CS2-${{ github.sha }}
-        path: output/
-        retention-days: 30
+        Expand-Archive -Path "EC-CS2.zip" -DestinationPath "extracted" -Force
+        Get-ChildItem "extracted\EC-CS2-Project\" | ForEach-Object {
+          if (-not (Test-Path ".\$($_.Name)")) {
+            Move-Item -Path $_.FullName -Destination "." -Force
+          }
+        }
